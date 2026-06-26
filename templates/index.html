@@ -968,7 +968,8 @@ body{
   to{opacity:1;transform:scale(1) rotateX(0)}
 }
 
-/* ═══════════════════════ AI ANALYSIS PANEL ═══════════════════════ */
+/* ═══════════════════════ AI ANALYSIS PANEL ═══════════════════════
+   Currently disabled – will be implemented server-side later */
 .ai-panel{
   margin-top:20px;
   grid-column:1/-1;
@@ -1040,6 +1041,7 @@ body{
   margin-top:2px;
 }
 
+/* Disabled analyze button */
 .btn-analyze{
   display:flex;
   align-items:center;
@@ -1047,33 +1049,19 @@ body{
   padding:10px 20px;
   border:none;
   border-radius:var(--r1);
-  background:linear-gradient(135deg, rgba(155,107,255,0.2), rgba(91,155,255,0.2));
-  border:1px solid rgba(155,107,255,0.3);
-  color:var(--t1);
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);
+  color:var(--t3);
   font-size:13px;
   font-weight:600;
   font-family:'Inter',sans-serif;
-  cursor:pointer;
-  transition:all 0.35s var(--spring));
+  cursor:not-allowed;
+  transition:all 0.35s var(--spring);
   white-space:nowrap;
 }
 
-.btn-analyze:hover:not(:disabled){
-  background:linear-gradient(135deg, rgba(155,107,255,0.3), rgba(91,155,255,0.3));
-  border-color:rgba(155,107,255,0.5);
-  transform:translateY(-2px);
-  box-shadow:0 8px 28px rgba(155,107,255,0.2);
-}
-
-.btn-analyze:disabled{
-  opacity:0.35;
-  cursor:not-allowed;
-  transform:none;
-}
-
-.btn-analyze.analyzing .ba-text{display:none}
-.btn-analyze.analyzing .ba-spin{display:block}
-.ba-spin{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite}
+.btn-analyze i{color:var(--t3)}
+.btn-analyze:hover{background:rgba(255,255,255,0.06);border-color:var(--border2);transform:translateY(-1px);}
 
 .ai-output{
   min-height:80px;
@@ -1095,79 +1083,6 @@ body{
 
 .ai-placeholder i{font-size:32px;color:var(--t4)}
 .ai-placeholder p{font-size:13px;color:var(--t3)}
-
-.ai-response{
-  display:none;
-  gap:20px;
-}
-
-.ai-response.show{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  animation:fadeUp 0.5s var(--ease);
-}
-
-@media(max-width:680px){
-  .ai-response.show{grid-template-columns:1fr}
-}
-
-.ai-fact{
-  padding:16px 18px;
-  background:rgba(255,255,255,0.02);
-  border:1px solid var(--border);
-  border-radius:var(--r1);
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  transition:all 0.3s var(--spring);
-}
-
-.ai-fact:hover{
-  background:rgba(155,107,255,0.04);
-  border-color:rgba(155,107,255,0.2);
-  transform:translateY(-2px);
-}
-
-.ai-fact-label{
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  color:var(--violet);
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-
-.ai-fact-label i{font-size:14px}
-
-.ai-fact-value{
-  font-size:13.5px;
-  color:var(--t1);
-  line-height:1.6;
-}
-
-.ai-loading{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  display:none;
-}
-
-.ai-loading.show{display:flex}
-
-.ai-skeleton{
-  height:14px;
-  border-radius:7px;
-  background:linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 100%);
-  background-size:200% 100%;
-  animation:skeleton 1.5s ease-in-out infinite;
-}
-
-@keyframes skeleton{
-  0%{background-position:200% 0}
-  100%{background-position:-200% 0}
-}
 
 /* ═══════════════════════ FOOTER ═══════════════════════ */
 .foot{
@@ -1232,7 +1147,7 @@ body{
   color:var(--t1);
   pointer-events:none;
   opacity:0;
-  transition:all 0.2s var(--ease));
+  transition:all 0.2s var(--ease);
   z-index:10;
 }
 
@@ -1399,7 +1314,7 @@ body{
 
     </div>
 
-    <!-- AI ANALYSIS PANEL (full-width below) -->
+    <!-- AI ANALYSIS PANEL (full-width below) - DISABLED (coming soon) -->
     <div class="ai-panel">
       <div class="ai-card">
         <div class="ai-card-shine"></div>
@@ -1412,7 +1327,8 @@ body{
               <div class="ai-title-sub">Identify a piece first, then get deep historical and strategic insights</div>
             </div>
           </div>
-          <button class="btn-analyze" id="analyzeBtn" disabled>
+          <!-- Button is disabled and shows a tooltip -->
+          <button class="btn-analyze" id="analyzeBtn" disabled data-tip="Coming soon!">
             <i class="ti ti-sparkles" style="font-size:14px"></i>
             <span class="ba-text">Analyze piece</span>
             <div class="ba-spin"></div>
@@ -1422,20 +1338,8 @@ body{
         <div class="ai-output" id="aiOutput">
           <div class="ai-placeholder" id="aiPlaceholder">
             <i class="ti ti-chess"></i>
-            <p>Identify a piece above to unlock AI-powered analysis</p>
+            <p>Identify a piece above to unlock AI‑powered analysis (coming soon)</p>
           </div>
-          <div class="ai-loading" id="aiLoading">
-            <div class="ai-skeleton" style="width:70%"></div>
-            <div class="ai-skeleton" style="width:90%"></div>
-            <div class="ai-skeleton" style="width:55%"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
-              <div class="ai-skeleton" style="height:80px;border-radius:10px"></div>
-              <div class="ai-skeleton" style="height:80px;border-radius:10px"></div>
-              <div class="ai-skeleton" style="height:80px;border-radius:10px"></div>
-              <div class="ai-skeleton" style="height:80px;border-radius:10px"></div>
-            </div>
-          </div>
-          <div class="ai-response" id="aiResponse"></div>
         </div>
 
       </div>
@@ -1650,8 +1554,6 @@ const errText = document.getElementById('errText');
 const uploadForm = document.getElementById('uploadForm');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const aiPlaceholder = document.getElementById('aiPlaceholder');
-const aiLoading = document.getElementById('aiLoading');
-const aiResponse = document.getElementById('aiResponse');
 
 let errTimer = null;
 let currentPiece = null;
@@ -1699,14 +1601,7 @@ function showResult(name, conf){
   if(pctEl) pctEl.textContent = pct+'%';
 
   currentPiece = p.label || name;
-  analyzeBtn.disabled = false;
-
-  // reset AI panel
-  aiResponse.classList.remove('show');
-  aiLoading.classList.remove('show');
-  aiPlaceholder.style.display = '';
-  aiPlaceholder.querySelector('p').textContent = `Ready to analyze the ${currentPiece.toLowerCase()} — click "Analyze piece"`;
-  aiPlaceholder.querySelector('i').className = 'ti ti-chess';
+  // AI button remains disabled (coming soon)
 }
 
 /* ─── Set file ─── */
@@ -1730,8 +1625,8 @@ function setFile(file){
     resultBanner.classList.remove('show');
     clearHighlights();
     hideErr();
-    analyzeBtn.disabled = true;
     currentPiece = null;
+    aiPlaceholder.querySelector('p').textContent = 'Identify a piece above to unlock AI‑powered analysis (coming soon)';
   };
   reader.onerror = ()=>showErr('Could not read the file.');
   reader.readAsDataURL(file);
@@ -1748,12 +1643,8 @@ function reset(){
   resultBanner.classList.remove('show');
   clearHighlights();
   hideErr();
-  analyzeBtn.disabled = true;
   currentPiece = null;
-  aiResponse.classList.remove('show');
-  aiLoading.classList.remove('show');
-  aiPlaceholder.style.display = '';
-  aiPlaceholder.querySelector('p').textContent = 'Identify a piece above to unlock AI-powered analysis';
+  aiPlaceholder.querySelector('p').textContent = 'Identify a piece above to unlock AI‑powered analysis (coming soon)';
 }
 
 /* ─── Ripple ─── */
@@ -1799,91 +1690,6 @@ uploadForm.addEventListener('submit', function(e){
 
 predictBtn.addEventListener('click', function(e){ if(!this.disabled) ripple(e,this); });
 
-/* ─── AI Analysis ─── */
-analyzeBtn.addEventListener('click', async function(){
-  if(!currentPiece) return;
-  this.classList.add('analyzing');
-  this.disabled = true;
-  aiPlaceholder.style.display = 'none';
-  aiResponse.classList.remove('show');
-  aiLoading.classList.add('show');
-  ripple({clientX:null}, this);
-
-  try{
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:1000,
-        system:`You are a chess expert and historian. Respond ONLY with a valid JSON object (no markdown, no backticks).
-Return exactly this structure:
-{
-  "movement": "one concise sentence describing how this piece moves",
-  "strategy": "one concise sentence on strategic usage",
-  "history": "one interesting historical fact about this piece",
-  "power_rating": "a number 1-10 rating the piece's overall power",
-  "famous_use": "a notable example from chess history featuring this piece",
-  "fun_fact": "a surprising or lesser-known fact"
-}`,
-        messages:[{role:'user', content:`Tell me about the chess ${currentPiece}.`}]
-      })
-    });
-
-    const data = await res.json();
-    const raw = data.content?.find(b=>b.type==='text')?.text || '{}';
-    let info;
-    try{ info = JSON.parse(raw.replace(/```json|```/g,'').trim()); }
-    catch{ throw new Error('Parse failed'); }
-
-    aiLoading.classList.remove('show');
-
-    const facts = [
-      {icon:'ti-arrows-move', label:'Movement', key:'movement'},
-      {icon:'ti-chess', label:'Strategy', key:'strategy'},
-      {icon:'ti-book', label:'History', key:'history'},
-      {icon:'ti-star', label:'Power rating', key:'power_rating'},
-      {icon:'ti-trophy', label:'Famous use', key:'famous_use'},
-      {icon:'ti-bulb', label:'Fun fact', key:'fun_fact'},
-    ];
-
-    aiResponse.innerHTML = '';
-    facts.forEach((f,i)=>{
-      const val = info[f.key] || '—';
-      const card = document.createElement('div');
-      card.className = 'ai-fact';
-      card.style.animationDelay = (i*60)+'ms';
-      card.innerHTML =
-        `<div class="ai-fact-label"><i class="ti ${f.icon}" aria-hidden="true"></i>${f.label}</div>`+
-        `<div class="ai-fact-value">${f.key==='power_rating' ? renderPower(val) : val}</div>`;
-      aiResponse.appendChild(card);
-    });
-
-    aiResponse.classList.add('show');
-
-  }catch(err){
-    aiLoading.classList.remove('show');
-    aiPlaceholder.style.display='';
-    aiPlaceholder.querySelector('i').className='ti ti-alert-circle';
-    aiPlaceholder.querySelector('p').textContent='Analysis failed. Please try again.';
-    console.error(err);
-  }
-
-  this.classList.remove('analyzing');
-  this.disabled = false;
-});
-
-function renderPower(val){
-  const n = parseInt(val) || 5;
-  const clamped = Math.min(10, Math.max(1, n));
-  let bars = '';
-  for(let i=1;i<=10;i++){
-    const filled = i<=clamped;
-    bars += `<span style="display:inline-block;width:16px;height:8px;border-radius:3px;margin-right:3px;background:${filled?'linear-gradient(135deg,var(--blue),var(--violet))':'rgba(255,255,255,0.07)'}"></span>`;
-  }
-  return `<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">${bars}<span style="font-size:12px;color:var(--t2);margin-left:4px">${clamped}/10</span></div>`;
-}
-
 /* ─── Keyboard shortcuts ─── */
 document.addEventListener('keydown', e=>{
   if(e.key==='Enter' && document.activeElement===document.body && !predictBtn.disabled) predictBtn.click();
@@ -1914,7 +1720,7 @@ if(resultBanner.classList.contains('show')){
   });
   if(pctEl) pctEl.textContent = Math.round(conf*100)+'%';
   const p = PIECES.find(x=>x.key===nameRaw);
-  if(p){ resSym.textContent=p.sym; currentPiece=p.label; analyzeBtn.disabled=false; }
+  if(p){ resSym.textContent=p.sym; currentPiece=p.label; }
 }
 
 window.chessVisionReset = reset;

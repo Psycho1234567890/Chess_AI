@@ -1,1 +1,1 @@
-web: gunicorn --timeout 120 --workers=1 app:app
+web: gunicorn --config gunicorn.conf.py app:app

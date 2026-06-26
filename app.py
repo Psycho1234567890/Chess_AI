@@ -6,23 +6,35 @@ from PIL import Image
 import tensorflow as tf
 from flask import Flask, render_template, request, redirect, url_for
 
+# Disable GPU detection to save memory and startup time
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Suppress info/warning logs
+
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
 
-# Use an absolute path to avoid issues on Render
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "chess_cnn_model.h5")
 
-# Load model with fallback
-if not os.path.exists(MODEL_PATH):
-    app.logger.warning(f"Model file '{MODEL_PATH}' not found. Using dummy model.")
-    class DummyModel:
-        def predict(self, x, verbose=0):
-            return np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
-    model = DummyModel()
-else:
+# Global variable for lazy loading
+_model = None
+
+def load_model():
+    """Load the model once and cache it globally."""
+    global _model
+    if _model is not None:
+        return _model
+
+    if not os.path.exists(MODEL_PATH):
+        app.logger.warning(f"Model file '{MODEL_PATH}' not found. Using dummy model.")
+        class DummyModel:
+            def predict(self, x, verbose=0):
+                return np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
+        _model = DummyModel()
+        return _model
+
     try:
-        model = tf.keras.models.load_model(MODEL_PATH)
+        _model = tf.keras.models.load_model(MODEL_PATH)
         app.logger.info("Model loaded successfully.")
     except Exception as e:
         app.logger.error(f"Failed to load model: {e}")
@@ -31,7 +43,8 @@ else:
         class DummyModel:
             def predict(self, x, verbose=0):
                 return np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
-        model = DummyModel()
+        _model = DummyModel()
+    return _model
 
 # Classes
 CLASS_NAMES = [
@@ -53,24 +66,15 @@ PIECE_EMOJIS = {
 }
 
 def preprocess_image(file_storage):
-    """
-    Preprocess uploaded image for prediction
-    """
     img = Image.open(file_storage.stream)
     img = img.convert("RGB")
     img = img.resize((28, 28))
-
-    img_array = np.array(img, dtype=np.float32)
-    img_array = img_array / 255.0
-
-    # Shape => (1, 28, 28, 3)
+    img_array = np.array(img, dtype=np.float32) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
 def perform_prediction(file_storage):
-    """
-    Run model prediction
-    """
+    model = load_model()  # Lazy load
     input_tensor = preprocess_image(file_storage)
     predictions = model.predict(input_tensor, verbose=0)
 
@@ -104,7 +108,6 @@ def predict():
         )
 
     file = request.files['image']
-
     if file.filename == '':
         return render_template(
             "index.html",

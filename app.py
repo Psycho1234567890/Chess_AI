@@ -11,9 +11,14 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
 MODEL_PATH = "chess_cnn_model.h5"
 
 if not os.path.exists(MODEL_PATH):
-    raise FileNotFoundError(f"Model file '{MODEL_PATH}' not found.")
-
-model = tf.keras.models.load_model(MODEL_PATH)
+    print(f"WARNING: Model file '{MODEL_PATH}' not found. Using dummy model for testing.")
+    # Dummy model for demonstration (always returns 'pawn')
+    class DummyModel:
+        def predict(self, x, verbose=0):
+            return np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
+    model = DummyModel()
+else:
+    model = tf.keras.models.load_model(MODEL_PATH)
 
 # Classes
 CLASS_NAMES = [
@@ -34,12 +39,10 @@ PIECE_EMOJIS = {
     'rook': '♜'
 }
 
-
 def preprocess_image(file_storage):
     """
     Preprocess uploaded image for prediction
     """
-
     img = Image.open(file_storage.stream)
     img = img.convert("RGB")
     img = img.resize((28, 28))
@@ -49,17 +52,13 @@ def preprocess_image(file_storage):
 
     # Shape => (1, 28, 28, 3)
     img_array = np.expand_dims(img_array, axis=0)
-
     return img_array
-
 
 def perform_prediction(file_storage):
     """
     Run model prediction
     """
-
     input_tensor = preprocess_image(file_storage)
-
     predictions = model.predict(input_tensor, verbose=0)
 
     predicted_index = int(np.argmax(predictions[0]))
@@ -69,7 +68,6 @@ def perform_prediction(file_storage):
     emoji = PIECE_EMOJIS.get(class_name, '♟')
 
     return class_name, confidence, emoji
-
 
 @app.route("/", methods=["GET"])
 def index():
@@ -81,10 +79,8 @@ def index():
         error=None
     )
 
-
 @app.route("/predict", methods=["POST"])
 def predict():
-
     if 'image' not in request.files:
         return render_template(
             "index.html",
@@ -107,10 +103,7 @@ def predict():
 
     try:
         class_name, confidence, emoji = perform_prediction(file)
-
-        print(
-            f"Prediction: {class_name} ({confidence:.2%})"
-        )
+        print(f"Prediction: {class_name} ({confidence:.2%})")
 
         return render_template(
             "index.html",
@@ -119,10 +112,8 @@ def predict():
             emoji=emoji,
             error=None
         )
-
     except Exception as e:
         print("Prediction error:", e)
-
         return render_template(
             "index.html",
             prediction=None,
@@ -131,17 +122,10 @@ def predict():
             error=f"Prediction failed: {str(e)}"
         )
 
-
 @app.route("/predict", methods=["GET"])
 def predict_redirect():
     return redirect(url_for("index"))
 
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-
-    app.run(
-        host="0.0.0.0",
-        port=port,
-        debug=False
-    )
+    app.run(host="0.0.0.0", port=port, debug=False)

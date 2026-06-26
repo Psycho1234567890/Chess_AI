@@ -1,22 +1,37 @@
 import os
+import sys
+import traceback
 import numpy as np
 from PIL import Image
 import tensorflow as tf
 from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
-# Load model
-MODEL_PATH = "chess_cnn_model.h5"
+# Use an absolute path for the model (robust for deployment)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "chess_cnn_model.h5")
 
+# Load model with error logging
 if not os.path.exists(MODEL_PATH):
-    print(f"WARNING: Model file '{MODEL_PATH}' not found. Using dummy model for testing.")
-    # Dummy model for demonstration (always returns 'pawn')
+    app.logger.warning(f"Model file '{MODEL_PATH}' not found. Using dummy model.")
     class DummyModel:
         def predict(self, x, verbose=0):
             return np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
     model = DummyModel()
+else:
+    try:
+        model = tf.keras.models.load_model(MODEL_PATH)
+        app.logger.info("Model loaded successfully.")
+    except Exception as e:
+        app.logger.error(f"Failed to load model: {e}")
+        app.logger.error(traceback.format_exc())
+        # Fallback to dummy model
+        class DummyModel:
+            def predict(self, x, verbose=0):
+                return np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
+        model = DummyModel()
 else:
     model = tf.keras.models.load_model(MODEL_PATH)
 
@@ -82,50 +97,17 @@ def index():
 @app.route("/predict", methods=["POST"])
 def predict():
     if 'image' not in request.files:
-        return render_template(
-            "index.html",
-            prediction=None,
-            confidence=0.0,
-            emoji='',
-            error="No image file provided."
-        )
+        return render_template("index.html", prediction=None, confidence=0.0, emoji='', error="No image file provided.")
 
     file = request.files['image']
-
     if file.filename == '':
-        return render_template(
-            "index.html",
-            prediction=None,
-            confidence=0.0,
-            emoji='',
-            error="No image selected."
-        )
+        return render_template("index.html", prediction=None, confidence=0.0, emoji='', error="No image selected.")
 
     try:
         class_name, confidence, emoji = perform_prediction(file)
-        print(f"Prediction: {class_name} ({confidence:.2%})")
-
-        return render_template(
-            "index.html",
-            prediction=class_name,
-            confidence=confidence,
-            emoji=emoji,
-            error=None
-        )
+        app.logger.info(f"Prediction: {class_name} ({confidence:.2%})")
+        return render_template("index.html", prediction=class_name, confidence=confidence, emoji=emoji, error=None)
     except Exception as e:
-        print("Prediction error:", e)
-        return render_template(
-            "index.html",
-            prediction=None,
-            confidence=0.0,
-            emoji='',
-            error=f"Prediction failed: {str(e)}"
-        )
-
-@app.route("/predict", methods=["GET"])
-def predict_redirect():
-    return redirect(url_for("index"))
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+        app.logger.error(f"Prediction error: {e}")
+        app.logger.error(traceback.format_exc())
+        return render_template("index.html", prediction=None, confidence=0.0, emoji='', error=f"Prediction failed: {str(e)}")

@@ -7,13 +7,13 @@ import tensorflow as tf
 from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
 
-# Use an absolute path for the model (robust for deployment)
+# Use an absolute path to avoid issues on Render
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "chess_cnn_model.h5")
 
-# Load model with error logging
+# Load model with fallback
 if not os.path.exists(MODEL_PATH):
     app.logger.warning(f"Model file '{MODEL_PATH}' not found. Using dummy model.")
     class DummyModel:
@@ -32,8 +32,6 @@ else:
             def predict(self, x, verbose=0):
                 return np.array([[1.0, 0.0, 0.0, 0.0, 0.0, 0.0]])
         model = DummyModel()
-else:
-    model = tf.keras.models.load_model(MODEL_PATH)
 
 # Classes
 CLASS_NAMES = [
@@ -97,17 +95,50 @@ def index():
 @app.route("/predict", methods=["POST"])
 def predict():
     if 'image' not in request.files:
-        return render_template("index.html", prediction=None, confidence=0.0, emoji='', error="No image file provided.")
+        return render_template(
+            "index.html",
+            prediction=None,
+            confidence=0.0,
+            emoji='',
+            error="No image file provided."
+        )
 
     file = request.files['image']
+
     if file.filename == '':
-        return render_template("index.html", prediction=None, confidence=0.0, emoji='', error="No image selected.")
+        return render_template(
+            "index.html",
+            prediction=None,
+            confidence=0.0,
+            emoji='',
+            error="No image selected."
+        )
 
     try:
         class_name, confidence, emoji = perform_prediction(file)
         app.logger.info(f"Prediction: {class_name} ({confidence:.2%})")
-        return render_template("index.html", prediction=class_name, confidence=confidence, emoji=emoji, error=None)
+        return render_template(
+            "index.html",
+            prediction=class_name,
+            confidence=confidence,
+            emoji=emoji,
+            error=None
+        )
     except Exception as e:
         app.logger.error(f"Prediction error: {e}")
         app.logger.error(traceback.format_exc())
-        return render_template("index.html", prediction=None, confidence=0.0, emoji='', error=f"Prediction failed: {str(e)}")
+        return render_template(
+            "index.html",
+            prediction=None,
+            confidence=0.0,
+            emoji='',
+            error=f"Prediction failed: {str(e)}"
+        )
+
+@app.route("/predict", methods=["GET"])
+def predict_redirect():
+    return redirect(url_for("index"))
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
